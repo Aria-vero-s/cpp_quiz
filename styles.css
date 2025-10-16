@@ -118,6 +118,7 @@ p.lead {
 }
 
 .choice {
+    color:var(--accent);
     flex: 1;
     padding: 14px;
     border-radius: 10px;
