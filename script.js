@@ -27,18 +27,6 @@ const QUESTIONS = [
         explainBad: 'Non — contrairement aux variables locales, une variable static n\'est pas détruite à la sortie du bloc.'
     },
     {
-        text: 'Regarde ce code :<div class="code-inline"><pre class="language-cpp"><code>class HumanB {\n    Weapon* weapon;\npublic:\n    void setWeapon(Weapon& w) { weapon = &w; }\n    void attack() { std::cout << weapon->getType(); }\n};\n\nint main() {\n    HumanB jim;\n    {\n        Weapon club("crude spiked club");\n        jim.setWeapon(club);\n    } // fin du bloc : club est détruit ici !\n\n    jim.attack(); // 💥 que se passe-t-il ?\n}</code></pre></div>\nLe pointeur dans <code>jim</code> est-il encore sûr après la fin du bloc ?',
-        choices: [
-            { value: 'safe', label: 'Oui — l\'adresse reste valide tant que le pointeur existe' },
-            { value: 'dead', label: 'Non — le pointeur devient pendu après la destruction de club' },
-            { value: 'copied', label: 'Oui — une copie de l\'objet a été faite' },
-            { value: 'undefined', label: 'Comportement indéfini, mais pas forcément dangereux' }
-        ],
-        answer: 'dead',
-        explainGood: 'Exact ! Quand le bloc se termine, la variable locale <code>club</code> est détruite, donc l\'adresse que <code>jim</code> garde n\'a plus de sens. Le pointeur devient "dangling" (pendu) et accéder à <code>*weapon</code> cause un comportement indéfini.',
-        explainBad: 'Non — <code>club</code> est une variable locale détruite à la fin du bloc. Le pointeur dans <code>jim</code> continue à pointer vers une zone mémoire qui n\'appartient plus au programme, ce qui est dangereux.'
-    },
-    {
         text: '<div class="code-inline"><pre class="language-cpp"><code>std::string fruit = "mango";\n\nvoid foo() {\n    std::string local = "pear";\n    std::string& ref = fruit;\n}\n\nint main() {\n    foo();\n    std::cout << fruit << std::endl;\n}</code></pre></div>Quand <code>main()</code> affiche <code>fruit</code>, est-il vivant ?',
         answer: 'alive',
         explainGood: 'Vivant ! La variable globale `fruit` existe pendant toute la durée du programme — foo() ne la détruit pas.',
@@ -73,6 +61,18 @@ const QUESTIONS = [
         answer: 'lifetime',
         explainGood: 'Oui — la règle C++ prolonge la durée de vie d\'un temporaire quand il est lié à une référence const, donc la référence reste valide pendant la durée de la variable `ref`.',
         explainBad: 'Non — ce n\'est pas une coïncidence du compilateur : c\'est la règle de prolongation de durée de vie pour les temporaires liés à une référence const.'
+    },
+    {
+        text: 'Regarde ce code :<div class="code-inline"><pre class="language-cpp"><code>class HumanB {\n    Weapon* weapon;\npublic:\n    void setWeapon(Weapon& w) { weapon = &w; }\n    void attack() { std::cout << weapon->getType(); }\n};\n\nint main() {\n    HumanB jim;\n    {\n        Weapon club("crude spiked club");\n        jim.setWeapon(club);\n    } // fin du bloc : club est détruit ici !\n\n    jim.attack(); // 💥 que se passe-t-il ?\n}</code></pre></div>\nLe pointeur dans <code>jim</code> est-il encore sûr après la fin du bloc ?',
+        choices: [
+            { value: 'safe', label: 'Oui — l\'adresse reste valide tant que le pointeur existe' },
+            { value: 'dead', label: 'Non — le pointeur devient pendu après la destruction de club' },
+            { value: 'copied', label: 'Oui — une copie de l\'objet a été faite' },
+            { value: 'undefined', label: 'Comportement indéfini, mais pas forcément dangereux' }
+        ],
+        answer: 'dead',
+        explainGood: 'Exact ! Quand le bloc se termine, la variable locale <code>club</code> est détruite, donc l\'adresse que <code>jim</code> garde n\'a plus de sens. Le pointeur devient "dangling" (pendu) et accéder à <code>*weapon</code> cause un comportement indéfini.',
+        explainBad: 'Non — <code>club</code> est une variable locale détruite à la fin du bloc. Le pointeur dans <code>jim</code> continue à pointer vers une zone mémoire qui n\'appartient plus au programme, ce qui est dangereux.'
     }
 ];
 
