@@ -1,0 +1,180 @@
+<!--
+README (à coller dans ton repo GitHub)
+
+Titre: Vivant ou Mort — Quiz sur la durée de vie en C++
+Description: Petite application web (HTML/CSS/JS) pour s'entraîner à la durée de vie des variables, références et pointeurs en C++. L'appli propose un compte à rebours 3-2-1 GO, un minuteur par question, des boutons "Vivant" / "Mort" et une page de résultats avec explications détaillées.
+
+Fichiers: index.html (tout dans un seul fichier pour simplicité)
+Usage local:
+  - Ouvre index.html dans un navigateur moderne.
+  - Clique sur "DÉMARRER".
+
+Pour publier sur GitHub Pages:
+  - Crée un repo, ajoute index.html à la racine, commit & push.
+  - Active GitHub Pages dans les paramètres du repo (branche main / root).
+
+Licence: MIT
+-->
+
+<!doctype html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Quiz — Vivant ou Mort (durée de vie en C++)</title>
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Prism for code highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css"
+        integrity="sha512-+oQv2m6xLa1h8dQ6QhV0kD6gQ3Vn1k3WvYk2sY1Q1Kq8cZQO8Yqj1sJYp6W0r6o2b7eVq5N7G1kQ9fJm9bK9Vg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"
+        integrity="sha512-7r0aM6t2c7yQ2e6b9zH4VqWw8lL9p3xF2Yb6sG5c7kL2m3n9yF1zQ==" crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-cpp.min.js"
+        integrity="sha512-Z+f3a5b2kqM8x3g9bN1w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+</head>
+
+<body>
+    <div class="app card" role="application" aria-labelledby="title">
+        <header>
+            <div>
+                <h1 id="title">Quiz — Vivant ou Mort (durée de vie en C++)</h1>
+                <p class="lead">Teste ta compréhension des durées de vie : références, temporaires, static et pointeurs.
+                </p>
+            </div>
+        </header>
+
+        <main id="main">
+            <!-- start screen -->
+            <section id="start" class="center">
+                <div class="start-block">
+                    <div class="center">
+                        <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='90' height='90'><rect rx='18' width='90' height='90' fill='%238bd3c7'/><text x='50%' y='54%' dominant-baseline='middle' text-anchor='middle' font-size='36' font-family='Arial' fill='%23031b17'>C++</text></svg>"
+                            alt="logo"
+                            style="border-radius:12px;box-shadow:0 8px 24px rgba(3,6,12,0.6);margin-right:18px">
+                    </div>
+                    <div class="center" style="flex-direction:column">
+                        <p class="small">Questions: <span id="qcount">0</span> · Temps par question: <span
+                                id="qtime">60</span>s</p>
+                        <div style="height:8px"></div>
+                        <button id="startBtn" class="btn">DÉMARRER</button>
+                        <button id="showRules" class="btn secondary">Voir les règles / Exemples</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- countdown -->
+            <section id="countdown" class="center" style="display:none;flex-direction:column">
+                <div class="countdown" id="countText">3</div>
+                <p class="small">Prépare-toi... le quiz commence bientôt</p>
+            </section>
+
+            <!-- quiz area -->
+            <section id="quiz" style="display:none">
+                <div class="question-area">
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                        <div>
+                            <div class="pill" id="progress">Question <span id="cur">1</span>/<span id="total">1</span>
+                            </div>
+                        </div>
+                        <div class="meta">
+                            <div class="pill">Temps restant: <strong id="timeLeft">60s</strong></div>
+                            <div class="pill" id="score">Score: 0</div>
+                        </div>
+                    </div>
+
+                    <div class="question" id="questionText">Question</div>
+
+                    <div class="choices">
+                        <button class="choice" data-answer="alive" id="btnAlive">Vivant</button>
+                        <button class="choice" data-answer="dead" id="btnDead">Mort</button>
+                    </div>
+
+                    <div class="timer" aria-hidden="true"><i id="bar" style="width:100%"></i></div>
+
+                    <div id="feedback" style="display:none">
+                        <div class="explain" id="explainText"></div>
+                    </div>
+
+                </div>
+
+                <footer class="controls">
+                    <div class="small">Réponse rapide: clique Vivant ou Mort. Tu peux aussi laisser le temps s'écouler.
+                    </div>
+                    <div>
+                        <button id="nextBtn" class="btn secondary" style="display:none">Suivant</button>
+                    </div>
+                </footer>
+            </section>
+
+            <!-- results -->
+            <section id="results" style="display:none">
+                <h2>Résultats</h2>
+                <p class="small" id="summary"></p>
+                <div class="results" id="resultsList"></div>
+                <div style="height:8px"></div>
+                <div style="display:flex;gap:8px">
+                    <button id="retry" class="btn">Rejouer</button>
+                    <button id="download" class="btn secondary">Télécharger mes résultats</button>
+                </div>
+            </section>
+
+            <!-- rules modal with nice code blocks -->
+            <section id="rules" style="display:none">
+                <h3>Règles & exemples</h3>
+                <div class="small">Tu dois décider si la variable référencée est <strong>vivante</strong> (encore
+                    existante) ou <strong>morte</strong> (détruite). Les cas fréquents :</div>
+                <ul class="small">
+                    <li>Variables locales : <em>mortes</em> à la fin du bloc.</li>
+                    <li>Variables globales & static : <em>vivantes</em> jusqu'à la fin du programme.</li>
+                    <li>Une référence non‑const (<code>T&</code>) ne peut pas se lier à un tempora (rvalue) — le
+                        compilateur empêche souvent l'erreur.</li>
+                    <li>Attention aux pointeurs et références stockés : vérifier la durée de vie de l'objet pointé.</li>
+                </ul>
+
+                <h4>Exemple sûr (Weapon.hpp)</h4>
+                <pre class="language-cpp">
+                    <code>
+                        // Weapon.hpp
+                        #ifndef WEAPON_H
+                        #define WEAPON_H
+
+                        #include <string>
+
+                        class Weapon {
+                        private:
+                            std::string type;
+                        public:
+                            Weapon(const std::string& t);
+                            void setType(const std::string& t);
+                            const std::string& getType() const;
+                        };
+
+                        #endif
+                    </code>
+                </pre>
+                <h4>Exemple dangereux (dangling reference)</h4>
+                <pre class="language-cpp">
+                    <code>
+                    // NE PAS FAIRE
+                    std::string& makeRef() {
+                        std::string temp = "Hello"; // local
+                        return temp;                  // retourne référence vers local détruit
+                    }
+
+                    int main() {
+                        std::string& r = makeRef();   // UB: r référence un objet mort
+                    }
+                    </code>
+                </pre>
+                <div style="height:8px"></div>
+                <button id="closeRules" class="btn">Fermer</button>
+            </section>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
