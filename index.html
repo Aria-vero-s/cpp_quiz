@@ -1,40 +1,110 @@
-<!--
-README (à coller dans ton repo GitHub)
-
-Titre: Vivant ou Mort — Quiz sur la durée de vie en C++
-Description: Petite application web (HTML/CSS/JS) pour s'entraîner à la durée de vie des variables, références et pointeurs en C++. L'appli propose un compte à rebours 3-2-1 GO, un minuteur par question, des boutons "Vivant" / "Mort" et une page de résultats avec explications détaillées.
-
-Fichiers: index.html (tout dans un seul fichier pour simplicité)
-Usage local:
-  - Ouvre index.html dans un navigateur moderne.
-  - Clique sur "DÉMARRER".
-
-Pour publier sur GitHub Pages:
-  - Crée un repo, ajoute index.html à la racine, commit & push.
-  - Active GitHub Pages dans les paramètres du repo (branche main / root).
-
-Licence: MIT
--->
-
 <!doctype html>
 <html lang="fr">
 
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Quiz — Vivant ou Mort (durée de vie en C++)</title>
+
     <link rel="stylesheet" href="styles.css">
 
     <!-- Prism for code highlighting -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css"
-        integrity="sha512-+oQv2m6xLa1h8dQ6QhV0kD6gQ3Vn1k3WvYk2sY1Q1Kq8cZQO8Yqj1sJYp6W0r6o2b7eVq5N7G1kQ9fJm9bK9Vg=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"
-        integrity="sha512-7r0aM6t2c7yQ2e6b9zH4VqWw8lL9p3xF2Yb6sG5c7kL2m3n9yF1zQ==" crossorigin="anonymous"
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" crossorigin="anonymous"
         referrerpolicy="no-referrer"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-cpp.min.js"
-        integrity="sha512-Z+f3a5b2kqM8x3g9bN1w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
+    <!-- Local small layout tweaks just for the start screen (no need to edit styles.css) -->
+    <style>
+        /* start-panel layout overrides (small and safe) */
+        .start-block {
+            width: 100%;
+            max-width: 980px;
+            display: grid;
+            grid-template-columns: 140px 1fr;
+            gap: 18px;
+            align-items: center;
+            padding: 14px;
+            border-radius: 12px;
+        }
+
+        .start-block .logo-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            border-radius: 12px;
+            background: linear-gradient(180deg, rgba(139, 211, 199, 0.06), rgba(139, 211, 199, 0.03));
+        }
+
+        .start-block .logo-panel img {
+            width: 110px;
+            height: 110px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(3, 6, 12, 0.6);
+        }
+
+        .start-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .start-controls .top {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: start;
+        }
+
+        .start-controls h2 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .start-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        #numQ,
+        #timeQ {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: inherit;
+            padding: 6px 8px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        /* responsive: stack columns on narrow screens */
+        @media (max-width: 720px) {
+            .start-block {
+                grid-template-columns: 1fr;
+            }
+
+            .start-block .logo-panel {
+                flex-direction: row;
+                gap: 12px;
+            }
+
+            .start-controls .top {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .start-controls .actions {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -51,17 +121,39 @@ Licence: MIT
             <!-- start screen -->
             <section id="start" class="center">
                 <div class="start-block">
-                    <div class="center">
-                        <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='90' height='90'><rect rx='18' width='90' height='90' fill='%238bd3c7'/><text x='50%' y='54%' dominant-baseline='middle' text-anchor='middle' font-size='36' font-family='Arial' fill='%23031b17'>C++</text></svg>"
-                            alt="logo"
-                            style="border-radius:12px;box-shadow:0 8px 24px rgba(3,6,12,0.6);margin-right:18px">
+                    <div class="logo-panel">
+                        <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='110' height='110'><rect rx='20' width='110' height='110' fill='%2320372b'/><text x='50%' y='52%' dominant-baseline='middle' text-anchor='middle' font-size='42' font-family='Arial' fill='%238bd3c7'>C++</text></svg>"
+                            alt="logo" />
+                        <div style="height:10px;"></div>
+                        <div class="small" style="color:var(--muted); text-align:center; max-width:120px;">Durée de vie
+                            &amp;
+                            références</div>
                     </div>
-                    <div class="center" style="flex-direction:column">
-                        <p class="small">Questions: <span id="qcount">0</span> · Temps par question: <span
-                                id="qtime">60</span>s</p>
-                        <div style="height:8px"></div>
-                        <button id="startBtn" class="btn">DÉMARRER</button>
-                        <button id="showRules" class="btn secondary">Voir les règles / Exemples</button>
+
+                    <div class="start-controls" aria-hidden="false">
+                        <div class="top">
+                            <div>
+                                <h2 style="font-weight:700">Prêt·e pour le quiz ?</h2>
+                                <p class="small" style="margin:6px 0 0 0;">Réponds vite : Vivant ou Mort — apprends avec
+                                    des
+                                    explications.</p>
+                            </div>
+
+                            <div style="text-align:right">
+                                <div class="pill" style="font-size:12px">Questions: <strong id="qcount">0</strong></div>
+                                <div style="height:6px"></div>
+                                <div class="pill" style="font-size:12px">Temps / Q: <span id="qtime">12</span>s</div>
+                            </div>
+                        </div>
+
+                        <div class="start-row" style="margin-top:6px;">
+                            <button id="startBtn" class="btn" style="padding:10px 14px;">DÉMARRER</button>
+                            <button id="showRules" class="btn secondary" style="padding:10px 14px">Voir les règles /
+                                Exemples</button>
+                        </div>
+
+                        <div class="small" style="color:var(--muted);margin-top:8px">Note : Les résultats sont
+                            téléchargeables à la fin.</div>
                     </div>
                 </div>
             </section>
@@ -81,7 +173,7 @@ Licence: MIT
                             </div>
                         </div>
                         <div class="meta">
-                            <div class="pill">Temps restant: <strong id="timeLeft">60s</strong></div>
+                            <div class="pill">Temps restant: <strong id="timeLeft">12s</strong></div>
                             <div class="pill" id="score">Score: 0</div>
                         </div>
                     </div>
@@ -126,48 +218,52 @@ Licence: MIT
             <section id="rules" style="display:none">
                 <h3>Règles & exemples</h3>
                 <div class="small">Tu dois décider si la variable référencée est <strong>vivante</strong> (encore
-                    existante) ou <strong>morte</strong> (détruite). Les cas fréquents :</div>
+                    existante) ou
+                    <strong>morte</strong> (détruite). Les cas fréquents :
+                </div>
                 <ul class="small">
                     <li>Variables locales : <em>mortes</em> à la fin du bloc.</li>
                     <li>Variables globales & static : <em>vivantes</em> jusqu'à la fin du programme.</li>
-                    <li>Une référence non‑const (<code>T&</code>) ne peut pas se lier à un tempora (rvalue) — le
-                        compilateur empêche souvent l'erreur.</li>
+                    <li>Une référence non-const (<code>T&</code>) ne peut pas se lier à un tempora (rvalue) — le
+                        compilateur empêche
+                        souvent l'erreur.</li>
                     <li>Attention aux pointeurs et références stockés : vérifier la durée de vie de l'objet pointé.</li>
                 </ul>
 
                 <h4>Exemple sûr (Weapon.hpp)</h4>
                 <pre class="language-cpp">
                     <code>
-                        // Weapon.hpp
-                        #ifndef WEAPON_H
-                        #define WEAPON_H
+                    // Weapon.hpp
+                    #ifndef WEAPON_H
+                    #define WEAPON_H
 
-                        #include <string>
+                    #include <string>
 
-                        class Weapon {
-                        private:
-                            std::string type;
-                        public:
-                            Weapon(const std::string& t);
-                            void setType(const std::string& t);
-                            const std::string& getType() const;
-                        };
+                    class Weapon {
+                    private:
+                        std::string type;
+                    public:
+                        Weapon(const std::string& t);
+                        void setType(const std::string& t);
+                        const std::string& getType() const;
+                    };
 
-                        #endif
+                    #endif
                     </code>
                 </pre>
+
                 <h4>Exemple dangereux (dangling reference)</h4>
                 <pre class="language-cpp">
                     <code>
-                    // NE PAS FAIRE
-                    std::string& makeRef() {
-                        std::string temp = "Hello"; // local
-                        return temp;                  // retourne référence vers local détruit
-                    }
+                        // NE PAS FAIRE
+                        std::string& makeRef() {
+                            std::string temp = "Hello"; // local
+                            return temp;                  // retourne référence vers local détruit
+                        }
 
-                    int main() {
-                        std::string& r = makeRef();   // UB: r référence un objet mort
-                    }
+                        int main() {
+                            std::string& r = makeRef();   // UB: r référence un objet mort
+                        }
                     </code>
                 </pre>
                 <div style="height:8px"></div>
