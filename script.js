@@ -1,5 +1,6 @@
-
 // Questions list with explanations (French)
+// Note : chaque question peut optionnellement fournir un `choices` array.
+// If absent, it defaults to the binary choices 'alive'/'dead'.
 const QUESTIONS = [
     {
         text: '<div class="code-inline"><pre class="language-cpp"><code>std::string s = "apple";\nstd::string& ref = s;</code></pre></div>Quand on quitte le bloc, est-ce que <code>s</code> est vivant ?',
@@ -26,12 +27,55 @@ const QUESTIONS = [
         explainBad: 'Non — contrairement aux variables locales, une variable static n\'est pas détruite à la sortie du bloc.'
     },
     {
-        text: 'Si on a un objet créé dans un bloc et qu\'on stocke son adresse dans un pointeur d\'un objet externe (p.ex. <div class="code-inline"><pre class="language-cpp"><code>humanB.setWeapon(club);</code></pre></div> où <code>club</code> est local du bloc), l\'adresse est-elle sûre après le bloc ?',
+        text: 'Regarde ce code :<div class="code-inline"><pre class="language-cpp"><code>class HumanB {\n    Weapon* weapon;\npublic:\n    void setWeapon(Weapon& w) { weapon = &w; }\n    void attack() { std::cout << weapon->getType(); }\n};\n\nint main() {\n    HumanB jim;\n    {\n        Weapon club("crude spiked club");\n        jim.setWeapon(club);\n    } // fin du bloc : club est détruit ici !\n\n    jim.attack(); // 💥 que se passe-t-il ?\n}</code></pre></div>\nLe pointeur dans <code>jim</code> est-il encore sûr après la fin du bloc ?',
+        choices: [
+            { value: 'safe', label: 'Oui — l\'adresse reste valide tant que le pointeur existe' },
+            { value: 'dead', label: 'Non — le pointeur devient pendu après la destruction de club' },
+            { value: 'copied', label: 'Oui — une copie de l\'objet a été faite' },
+            { value: 'undefined', label: 'Comportement indéfini, mais pas forcément dangereux' }
+        ],
         answer: 'dead',
-        explainGood: 'Correct — la variable locale est détruite à la sortie du bloc ; le pointeur devient pendu.',
-        explainBad: 'Faux — l\'adresse devient invalide si l\'objet local est détruit.'
+        explainGood: 'Exact ! Quand le bloc se termine, la variable locale <code>club</code> est détruite, donc l\'adresse que <code>jim</code> garde n\'a plus de sens. Le pointeur devient "dangling" (pendu) et accéder à <code>*weapon</code> cause un comportement indéfini.',
+        explainBad: 'Non — <code>club</code> est une variable locale détruite à la fin du bloc. Le pointeur dans <code>jim</code> continue à pointer vers une zone mémoire qui n\'appartient plus au programme, ce qui est dangereux.'
+    },
+    {
+        text: '<div class="code-inline"><pre class="language-cpp"><code>std::string fruit = "mango";\n\nvoid foo() {\n    std::string local = "pear";\n    std::string& ref = fruit;\n}\n\nint main() {\n    foo();\n    std::cout << fruit << std::endl;\n}</code></pre></div>Quand <code>main()</code> affiche <code>fruit</code>, est-il vivant ?',
+        answer: 'alive',
+        explainGood: 'Vivant ! La variable globale `fruit` existe pendant toute la durée du programme — foo() ne la détruit pas.',
+        explainBad: 'Faux — une variable globale ne disparaît pas quand on quitte une fonction locale.'
+    },
+    {
+        text: '<div class="code-inline"><pre class="language-cpp"><code>std::string& make() {\n    static std::string s = \"plum\";\n    return s;\n}\n\nint main() {\n    std::string& r1 = make();\n    std::string& r2 = make();\n}\n</code></pre></div>Combien d\'objets <code>std::string</code> réels existent en mémoire à la fin de <code>main()</code> ?',
+        choices: [
+            { value: '0', label: '0' },
+            { value: '1', label: '1' },
+            { value: '2', label: '2' },
+            { value: '3', label: '3' }
+        ],
+        answer: '1',
+        explainGood: 'Exactement 1 objet : `s` est static et unique ; `r1` et `r2` sont deux références vers le même objet.',
+        explainBad: 'Incorrect — r1 et r2 sont des références, pas des copies : il n\'y a qu\'une seule instance de `s`.'
+    },
+    {
+        text: '<div class="code-inline"><pre class="language-cpp"><code>void bar(const std::string& ref) {\n    std::cout << ref << std::endl;\n}\n\nint main() {\n    bar(\"grape\");\n}</code></pre></div>Le littéral <code>"grape"</code> est-il vivant pendant l\'exécution de <code>bar()</code> ?',
+        answer: 'alive',
+        explainGood: 'Vivant ! Les littéraux de chaîne sont stockés dans la zone de données du binaire et existent jusqu\'à la fin du programme.',
+        explainBad: 'Incorrect — les littéraux ne sont pas des variables locales et ne disparaissent pas à la fin de la fonction.'
+    },
+    {
+        text: '<div class="code-inline"><pre class="language-cpp"><code>std::string getName() {\n    return \"lemon\";\n}\n\nint main() {\n    const std::string& ref = getName();\n    std::cout << ref << std::endl;\n}</code></pre></div>Pourquoi ce code fonctionne-t-il (la référence const est liée à un tempora) ?',
+        choices: [
+            { value: 'lifetime', label: 'Parce que la liaison d\'un temporaire à une référence const prolonge sa durée de vie' },
+            { value: 'optimizer', label: 'Parce que le compilateur optimise et garde le temporaire' },
+            { value: 'copy', label: 'Parce que il y a une copie automatique dans main()' },
+            { value: 'undefined', label: 'Ce code est toujours undefined behaviour' }
+        ],
+        answer: 'lifetime',
+        explainGood: 'Oui — la règle C++ prolonge la durée de vie d\'un temporaire quand il est lié à une référence const, donc la référence reste valide pendant la durée de la variable `ref`.',
+        explainBad: 'Non — ce n\'est pas une coïncidence du compilateur : c\'est la règle de prolongation de durée de vie pour les temporaires liés à une référence const.'
     }
 ];
+
 
 // State
 let state = {
@@ -40,7 +84,8 @@ let state = {
     answers: [],
     timePerQuestion: 60,
     timer: null,
-    countdownTimer: null
+    countdownTimer: null,
+    answered: false
 };
 
 // Elements
@@ -55,8 +100,7 @@ const quizEl = document.getElementById('quiz');
 const questionText = document.getElementById('questionText');
 const cur = document.getElementById('cur');
 const total = document.getElementById('total');
-const btnAlive = document.getElementById('btnAlive');
-const btnDead = document.getElementById('btnDead');
+const choicesContainer = document.querySelector('.choices');
 const timeLeft = document.getElementById('timeLeft');
 const bar = document.getElementById('bar');
 const feedback = document.getElementById('feedback');
@@ -114,10 +158,37 @@ function renderQuestion() {
     codes.forEach(el => { if (window.Prism) Prism.highlightElement(el); });
 
     feedback.style.display = 'none'; explainText.textContent = '';
-    btnAlive.className = 'choice'; btnDead.className = 'choice';
     nextBtn.style.display = 'none';
     scorePill.textContent = 'Score: ' + state.score;
+    state.answered = false;
+
+    // render choices dynamically
+    choicesContainer.innerHTML = '';
+    const choiceList = q.choices ? q.choices : [
+        { value: 'alive', label: 'Vivant' },
+        { value: 'dead', label: 'Mort' }
+    ];
+
+    choiceList.forEach((c, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'choice';
+        btn.dataset.answer = c.value;
+        btn.type = 'button';
+        btn.innerText = c.label;
+        btn.addEventListener('click', () => handleChoiceClick(c.value, btn));
+        choicesContainer.appendChild(btn);
+    });
+
     startTimer(state.timePerQuestion);
+}
+
+function handleChoiceClick(value, btn) {
+    if (state.answered) return; // prevent double answers
+    onAnswer(value);
+    // mark clicked button as selected (visual)
+    const all = choicesContainer.querySelectorAll('.choice');
+    all.forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
 }
 
 function startTimer(seconds) {
@@ -144,24 +215,32 @@ function onAnswer(chosen) {
     const correct = q.answer;
     const isCorrect = (chosen === correct);
     state.answers.push({ question: q.text, chosen, correct, explainGood: q.explainGood, explainBad: q.explainBad });
+    state.answered = true;
+
     // update UI
     feedback.style.display = 'block';
-    explainText.textContent = isCorrect ? q.explainGood : q.explainBad;
-    // marking
-    if (chosen === 'alive') btnAlive.classList.add(isCorrect ? 'correct' : 'wrong');
-    if (chosen === 'dead') btnDead.classList.add(isCorrect ? 'correct' : 'wrong');
-    if (isCorrect) state.score += 1; scorePill.textContent = 'Score: ' + state.score;
+    explainText.textContent = (chosen === correct) ? q.explainGood : q.explainBad;
+
+    // marking: style all choice buttons accordingly
+    const all = choicesContainer.querySelectorAll('.choice');
+    all.forEach(btn => {
+        const val = btn.dataset.answer;
+        btn.classList.remove('correct', 'wrong', 'selected');
+        if (val === correct) btn.classList.add('correct');
+        else if (chosen && val === chosen && val !== correct) btn.classList.add('wrong');
+        // disable further clicks
+        btn.disabled = true;
+    });
+
+    // scoring
+    if (isCorrect) state.score += 1;
+    scorePill.textContent = 'Score: ' + state.score;
+
     nextBtn.style.display = 'inline-block';
     // if last question, show finish
-    if (state.idx === QUESTIONS.length - 1) {
-        nextBtn.textContent = 'Terminer';
-    } else {
-        nextBtn.textContent = 'Suivant';
-    }
+    nextBtn.textContent = (state.idx === QUESTIONS.length - 1) ? 'Terminer' : 'Suivant';
 }
 
-btnAlive.addEventListener('click', () => { onAnswer('alive'); });
-btnDead.addEventListener('click', () => { onAnswer('dead'); });
 nextBtn.addEventListener('click', () => {
     if (state.idx === QUESTIONS.length - 1) showResults();
     else { state.idx++; renderQuestion(); }
@@ -190,4 +269,3 @@ download.addEventListener('click', () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = 'vrai_mort_results.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 });
-
